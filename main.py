@@ -31,6 +31,17 @@ def ProduitMatriciel(A, B):
             R[i, j] = ProduitMatricielElementaire(A, B, i, j)
     return R
 
+def Produit(A, B):
+    '''
+    Produit coordonnée à coordonnée de la matrice
+    '''
+    n = A.shape[0]
+    p = B.shape[1]
+    R = np.zeros((n, p), float)
+    for i in range(n):
+        for j in range(p):
+            R[i,j] = A[i,j] * B[i,j]
+    return R
 
 def ConvolutionElementaire(A, a, b, C):
     '''
@@ -111,8 +122,8 @@ def Compresser(M, f):
     return I
 
 
-def Afficher(M):
-    plt.imshow(M, cmap='gray', vmin=0, vmax=255)
+def Afficher(M, min=0, max=255):
+    plt.imshow(M, cmap='gray', vmin=min, vmax=max)
     plt.show()
 
 
@@ -172,18 +183,16 @@ def Bornes(M):
                 min = M[i,j]
     return min, max
 
-def Histogramme(M, p = 0):
+def Histogramme(M, p):
     '''
     Crée un histogramme des valeurs
     p : nombre après la virgule, 0 par défaut
     '''
-    H = []
+    H = {p*i:0 for i in range(-255, 255*255//p)}
     x, y = M.shape
     for i in range(x):
         for j in range(y):
-            v = M[i,j].round(p)
-            if v not in H:
-                H.append(v)
+            H[int(M[i,j]//p * p)] += 1
     return H
 
 def Hysteresis(M, bas = 0.05, haut = 0.09):
@@ -191,3 +200,31 @@ def Hysteresis(M, bas = 0.05, haut = 0.09):
     hist = Histogramme(M, 1)
     pas = (max - min)/len(hist)
     valeurs = np.linspace(start, stop)
+
+def Seuil(M, s):
+    x, y = M.shape
+    for i in range(x):
+        for j in range(y):
+            if M[i,j] < s:
+                M[i,j] = 0
+    return M
+
+def MinDistanceList(c, L):
+    if len(L) == 0:
+        return 0
+    min = x**2 + y**2
+    for e in L:
+        dist = np.sqrt((c[0]-e[0])**2 + (c[1] - e[1])**2)
+        if dist < min:
+            min = dist
+    return min
+
+def PointsRectangle(P, nbMax):
+    x, y = P.shape
+    coord = []
+    for i in range(x):
+        for j in range(y):
+            if P[i,j] > 0 and MinDistList([x,y], coord) > (x+y)/4:
+                coord.append([i,j])
+
+
