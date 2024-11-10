@@ -42,17 +42,39 @@ def ComputeHomography(PE, PS):
 
     return H
 
+def EstDansCube(x, C):
+    """
+    Revoie vrai si x est dans le cube dont les coordonnées sont dans C
+    """
+    return (C[0,0] >= x[0] >= C[0,1]) and (C[1,0] >= x[0] >= C[0,1])
+
+
+def ErrorNonAffected(I, C):
+    x = C[1][0] - C[0][0]
+    y = C[3][0] - C[2][0]
+    error = 0
+    for i in range(x):
+        for j in range(y):
+            if I[i+C[0][0],j+C[2][0]] == 0:
+                error += 1
+    return error
+
+
 # TODO Revoir la position des pixels pour éviter les troues
 
 def TransformationProjective(I, PE, PS):
     h, w = I.shape
     S = np.zeros((h, w))
     matrix = ComputeHomography(PE, PS)
+    error_count = 0
 
     for i in range(h):
         for j in range(w):
             tmp = np.dot(matrix, np.array([[j, i, 1]]).T)
             x, y = round(tmp[0][0]/tmp[2][0]), round(tmp[1][0]/tmp[2][0])
             if 0 < x < h and 0 < y < w:
+                # Calcul de l'erreur à retirer
+                if S[y][x] != 0:
+                    error_count += 1
                 S[y][x] = I[i][j]
-    return S
+    return S, error_count
