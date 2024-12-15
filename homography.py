@@ -60,21 +60,73 @@ def ErrorNonAffected(I, C):
     return error
 
 
-# TODO Revoir la position des pixels pour éviter les troues
+def InterpolationRound(Point, S):
+    return round(Point[0]), round(Point[1])
 
-def TransformationProjective(I, PE, PS):
+def InterpolationNeighbour(Point, S):
+    # TODO Problème si la sortie est trop petite, l'erreur est en cascade
+    x, y = InterpolationRound(Point, S)
+    mx, my = S.shape
+    if not(2 < x < mx-2 and 2 < y < my-2): # Néglige les bords
+        return x, y
+    if S[x][y] == -1:
+        return x, y
+    # Cas où il y a déjà un pixel
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            if S[x+i][y+j] == -1:
+                return x+i, y+j
+    return x, y
+
+def TransformationProjective(I, PE, PS, Interpolation : callable = InterpolationRound):
     h, w = I.shape
-    S = np.zeros((h, w))
+    S = np.full((w, h), -1)
     matrix = ComputeHomography(PE, PS)
     error_count = 0
 
     for i in range(h):
         for j in range(w):
             tmp = np.dot(matrix, np.array([[j, i, 1]]).T)
-            x, y = round(tmp[0][0]/tmp[2][0]), round(tmp[1][0]/tmp[2][0])
-            if 0 < x < h and 0 < y < w:
+            x, y = tmp[0][0]/tmp[2][0], tmp[1][0]/tmp[2][0]
+            x, y = Interpolation([x, y], S) # Méthode d'interpolation
+            if 0 < x < w and 0 < y < h:
                 # Calcul de l'erreur à retirer
-                if S[y][x] != 0:
+                if S[x][y] != -1:
                     error_count += 1
-                S[y][x] = I[i][j]
-    return S, error_count
+                S[x][y] = I[i][j]
+    return S.transpose(), error_count
+
+def FillBasedOnNeighbour(M):
+    x, y = M.shape
+    Img = M.copy()
+    for i in range(x):
+        for j in range(y):
+            if M[i][j] == -1:
+                Img[i, j] = CloneNeighbour(M, (i, j), 1)
+    return Img
+
+def CloneNeighbour(M, P, r=1):
+    x, y = P
+    Points = []
+    for i in range(-r, r+1):
+        for j in range(-r, r+1):
+            if 0 <= x+i < M.shape[0] and 0 <= y+j < M.shape[1]:
+                if  M[x+i][y+j] != -1:
+                    Points.append(M[x+i, y+j])
+    return MajorityPoint(Points)
+
+def MajorityPoint(Points):
+    if len(Points) == 0:
+        return 0
+    m = np.mean(Points)
+    d = {abs(Points[i]-m): i for i in range(len(Points))}
+    vmin = np.min(np.abs(Points - m))
+    return Points[d[vmin]]
+
+def CropImage(H, PS = [[2408,0],[2408,3508],[0,0],[0,3508]]):
+    """
+    H : Image transformed
+    PS : Image Coordinates
+    """
+    Doc = H[round(PS[2][1]):round(PS[1][1]), round(PS[2][0]):round(PS[1][0])]
+    return Doc

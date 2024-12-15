@@ -114,6 +114,8 @@ def Compresser(M, f):
     '''
     Compresse l'image d'un facteur f
     '''
+    if f == 1:
+        return M
     x, y = M.shape
     I = np.zeros((x//f, y//f))
     for i in range(x//f):
@@ -122,10 +124,37 @@ def Compresser(M, f):
     return I
 
 
-def Afficher(M, min=0, max=255):
+def AfficherAxe(M, min=0, max=255):
     plt.imshow(M, cmap='gray', vmin=min, vmax=max)
     plt.show()
 
+def Afficher(M):
+    fig = plt.figure(frameon=False)
+    fig.set_size_inches(8.3, 11.7, 150) # A4
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    plt.imshow(M, cmap='gray')
+
+def SaveAsPng(M, filename : str):
+    Base = M.copy()
+    rgba_image = np.zeros((*M.shape, 4), dtype=np.uint8)
+    rgba_image[..., 0] = M  # Red channel
+    rgba_image[..., 1] = M  # Green channel
+    rgba_image[..., 2] = M  # Blue channel
+    rgba_image[..., 3] = np.where(Base == -1, 0, 255)
+    plt.imsave(filename, rgba_image)
+
+def ImportAsPng(filename):
+    I = Image.open(filename, mode="r").convert('RGBA')
+    image_array = np.array(I)
+
+    alpha = image_array[..., 3]
+    Img = (0.299 * image_array[..., 0] +
+           0.587 * image_array[..., 1] +
+           0.114 * image_array[..., 2]).astype(np.float32)
+    Img[alpha == 0] = -1
+    return Img
 
 def NormeAngle(MX, MY):
     x, y = MX.shape
