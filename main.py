@@ -54,7 +54,7 @@ def ConvolutionElementaire(A, a, b, C):
     S = 0
     for i in range(x):
         for j in range(y):
-            if ((a-cx)+i >= 0 and (a-cx)+i < mx) and ((b-cy)+j >= 0 and (b-cy)+j < my):
+            if ((a-cx)+i >= 0 and (a-cx)+i < mx) and ((b-cy)+j >= 0 and (b-cy)+j < my) and A[a-cx+i, b-cy+j] >= 0: # A>0 pour une image transparente ou alpha = -1
                 S += A[a-cx+i, b-cy+j] * C[i, j]
     return S
 
@@ -67,7 +67,8 @@ def Convolution(A, C):
     R = np.zeros((x, y), A.dtype)
     for i in range(x):
         for j in range(y):
-            R[i, j] = ConvolutionElementaire(A, i, j, C)
+            if R[i,j] >= 0:
+                R[i,j] = ConvolutionElementaire(A, i, j, C)
     return R
 
 
@@ -134,7 +135,7 @@ def Afficher(M):
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    plt.imshow(M, cmap='gray')
+    plt.imshow(M, cmap='gray', interpolation='none', resample=False, vmin=0, vmax=255)
 
 def SaveAsPng(M, filename : str):
     Base = M.copy()
@@ -256,4 +257,20 @@ def PointsRectangle(P, nbMax):
             if P[i,j] > 0 and MinDistList([x,y], coord) > (x+y)/4:
                 coord.append([i,j])
 
+def ApplyToEach(M, f):
+    x, y = M.shape
+    R = np.zeros()
+    for i in range(x):
+        for j in range(y):
+            R[i,j] = f(M[i,j])
+    return R
 
+#TODO Convertir les fonctions en utilisant Apply To Each
+
+def MatrixToList(M):
+    val = []
+    x, y = M.shape
+    for i in range(x):
+        for j in range(y):
+            val.append(M[i,j])
+    return val

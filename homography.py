@@ -69,12 +69,12 @@ def InterpolationNeighbour(Point, S):
     mx, my = S.shape
     if not(2 < x < mx-2 and 2 < y < my-2): # Néglige les bords
         return x, y
-    if S[x][y] == -1:
+    if S[x][y] < 0:
         return x, y
     # Cas où il y a déjà un pixel
     for i in range(-1, 2):
         for j in range(-1, 2):
-            if S[x+i][y+j] == -1:
+            if S[x+i][y+j] < 0:
                 return x+i, y+j
     return x, y
 
@@ -111,7 +111,7 @@ def CloneNeighbour(M, P, r=1):
     for i in range(-r, r+1):
         for j in range(-r, r+1):
             if 0 <= x+i < M.shape[0] and 0 <= y+j < M.shape[1]:
-                if  M[x+i][y+j] != -1:
+                if  M[x+i][y+j] >= 0:
                     Points.append(M[x+i, y+j])
     return MajorityPoint(Points)
 
