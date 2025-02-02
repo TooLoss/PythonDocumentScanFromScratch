@@ -1,4 +1,6 @@
 import numpy as np
+from numpy import ndarray
+
 import main as m
 
 def WhiteScale(I, p):
@@ -22,6 +24,7 @@ def Moyenne(L, P):
     moy = 0
     for n in range(L):
         moy += n*P(n)
+    return moy
 
 def DicoPixelCount(I):
     PixelCount = {x:0 for x in range(int(np.max(I) + 1))}
@@ -34,21 +37,27 @@ def DicoPixelCount(I):
 GlobalDico = {}
 CacheImage = np.zeros((1,1))
 
-def DicoProba(n, D = GlobalDico):
+def DicoProba(n, D=None):
+    if D is None:
+        D = GlobalDico
     x, y = np.shape(CacheImage)
     return D[n]/(x*y)
 
-def FADIT(I, p=0):
+def FADIT(I, p: (int, int) = 0):
     """
     Donne un seuil pour l'image I noir et blanc
-    I : Image
-    p : Padding
+    @param I: Image
+    @param p: Padding de l'image pour l'analyse du seuil
+    @return: L'image seuillé
     """
-    Img = np.floor(I).astype(int)
+    Img = np.abs(np.floor(I).astype(int))
+    global CacheImage
+    global GlobalDico
     CacheImage = Img
-    GlobalDico = DicoPixelCount(Img)
+    GlobalDico = DicoPixelCount(m.Padding(Img, p))
     C = Criterion(DicoProba, np.max(Img))
-    return C
+    print("Seuil : " + str(C))
+    return m.Seuil(Img, C)
 
 
 def Criterion(P, L=255):
@@ -60,11 +69,11 @@ def Criterion(P, L=255):
     for t in range(L):
         S_t = Pi(P, t)
         moy = Moyenne(L, P)
-        f_t = moy / ((moy + t*(t+1)/2)*(1 - moy/L-1))
+        f_t = moy / (moy + (t * (t + 1) / 2) * (1 - (moy / (L - 1))))
         C_t = 2*S_t*f_t - S_t - f_t + 1
         if C_t > C_max:
             C_max = C_t
-            T_max = t
+            t_max = t
     return t_max
 
 def Pi(P, t):

@@ -7,10 +7,10 @@ import math as math
 
 
 def ProduitMatricielElementaire(A, B, i, j):
-    '''
+    """
     Produit Matriciel Elementaire
     Opération (A*B) aux coordonnées i, j
-    '''
+    """
     p = A.shape[0]
     S = 0
     for k in range(p):
@@ -19,9 +19,9 @@ def ProduitMatricielElementaire(A, B, i, j):
 
 
 def ProduitMatriciel(A, B):
-    '''
+    """
     Fait le produit matriciel sur toute la matrice
-    '''
+    """
     assert A.shape[1] == B.shape[0]
     n = A.shape[0]
     j = B.shape[1]
@@ -32,9 +32,9 @@ def ProduitMatriciel(A, B):
     return R
 
 def Produit(A, B):
-    '''
+    """
     Produit coordonnée à coordonnée de la matrice
-    '''
+    """
     n = A.shape[0]
     p = B.shape[1]
     R = np.zeros((n, p), float)
@@ -44,9 +44,9 @@ def Produit(A, B):
     return R
 
 def ConvolutionElementaire(A, a, b, C):
-    '''
+    """
     Fait le produit de la matrice. Version centré
-    '''
+    """
     mx, my = A.shape
     x, y = C.shape
     cx = (x-1)//2
@@ -54,29 +54,28 @@ def ConvolutionElementaire(A, a, b, C):
     S = 0
     for i in range(x):
         for j in range(y):
-            if ((a-cx)+i >= 0 and (a-cx)+i < mx) and ((b-cy)+j >= 0 and (b-cy)+j < my) and A[a-cx+i, b-cy+j] >= 0: # A>0 pour une image transparente ou alpha = -1
+            if (0 <= (a - cx) + i < mx) and (0 <= (b - cy) + j < my):
                 S += A[a-cx+i, b-cy+j] * C[i, j]
     return S
 
 
 def Convolution(A, C):
-    '''
+    """
     Convolution A*C
-    '''
+    """
     x, y = A.shape
     R = np.zeros((x, y), A.dtype)
     for i in range(x):
         for j in range(y):
-            if R[i,j] >= 0:
-                R[i,j] = ConvolutionElementaire(A, i, j, C)
+            R[i, j] = ConvolutionElementaire(A, i, j, C)
     return R
 
 
 def GaussianFilter(n, s):
-    '''
+    """
     n : Taille du filtre gaussien
     s : Coefficient
-    '''
+    """
     G = np.zeros((n, n))
     M = (n+1)//2
     for i in range(n):
@@ -87,11 +86,13 @@ def GaussianFilter(n, s):
 
 
 def GaussianBlur(A, n, s):
-    '''
+    """
     Applique un filtre Gaussian sur l'image
-    n : Taille du filtre
-    s : Paramètre
-    '''
+    @param A: Image entrée
+    @param n: Taille du filtre
+    @param s: Puissance du flou [0, 1]
+    @return: Image flouté
+    """
     return Convolution(A, GaussianFilter(n, s))
 
 
@@ -112,9 +113,9 @@ def SquareMatrix(n, r, v):
 
 
 def Compresser(M, f):
-    '''
+    """
     Compresse l'image d'un facteur f
-    '''
+    """
     if f == 1:
         return M
     x, y = M.shape
@@ -135,9 +136,16 @@ def Afficher(M):
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    plt.imshow(M, cmap='gray', interpolation='none', resample=False, vmin=0, vmax=255)
+    plt.imshow(M, cmap='gray')
 
 def SaveAsPng(M, filename : str):
+    """
+    Sauvegarde l'image au format PNG
+    @param M: Image
+    @param filename: nome du fichier
+    """
+    if not filename.endswith('.png'):
+        filename += '.png'
     Base = M.copy()
     rgba_image = np.zeros((*M.shape, 4), dtype=np.uint8)
     rgba_image[..., 0] = M  # Red channel
@@ -164,10 +172,10 @@ def NormeAngle(MX, MY):
     return Theta, Norme
 
 def NonMaximum(A, N):
-    '''
+    """
     A matrice d'angle
     N norme
-    '''
+    """
     x, y = A.shape
     R = N.copy()
     for i in range(1, x-1):
@@ -198,38 +206,17 @@ def NonMaximum(A, N):
                     R[i,j] = 0
     return R
 
-def Bornes(M):
-    '''
-    Renvoie la valeur minimale et maximale de la matrice
-    '''
-    x, y = M.shape
-    min = M[0,0]
-    max = M[0,0]
-    for i in range(x):
-        for j in range(y):
-            if M[i,j] > max:
-                max = M[i,j]
-            if M[i,j] < min:
-                min = M[i,j]
-    return min, max
-
 def Histogramme(M, p):
-    '''
+    """
     Crée un histogramme des valeurs
     p : nombre après la virgule, 0 par défaut
-    '''
+    """
     H = {p*i:0 for i in range(-255, 255*255//p)}
     x, y = M.shape
     for i in range(x):
         for j in range(y):
             H[int(M[i,j]//p * p)] += 1
     return H
-
-def Hysteresis(M, bas = 0.05, haut = 0.09):
-    min, max = Bornes(M)
-    hist = Histogramme(M, 1)
-    pas = (max - min)/len(hist)
-    valeurs = np.linspace(start, stop)
 
 def Seuil(M, s):
     x, y = M.shape
@@ -239,38 +226,10 @@ def Seuil(M, s):
                 M[i,j] = 0
     return M
 
-def MinDistanceList(c, L):
-    if len(L) == 0:
-        return 0
-    min = x**2 + y**2
-    for e in L:
-        dist = np.sqrt((c[0]-e[0])**2 + (c[1] - e[1])**2)
-        if dist < min:
-            min = dist
-    return min
-
-def PointsRectangle(P, nbMax):
-    x, y = P.shape
-    coord = []
-    for i in range(x):
-        for j in range(y):
-            if P[i,j] > 0 and MinDistList([x,y], coord) > (x+y)/4:
-                coord.append([i,j])
-
-def ApplyToEach(M, f):
-    x, y = M.shape
-    R = np.zeros()
-    for i in range(x):
-        for j in range(y):
-            R[i,j] = f(M[i,j])
+def Padding(I, p : (int, int)):
+    x, y = I.shape
+    R = np.zeros((x-2*p[0], y-2*p[1]))
+    for i in range(p[0], x-p[0]):
+        for j in range(p[1], y-p[1]):
+            R[i-p[0],j-p[1]] = I[i,j]
     return R
-
-#TODO Convertir les fonctions en utilisant Apply To Each
-
-def MatrixToList(M):
-    val = []
-    x, y = M.shape
-    for i in range(x):
-        for j in range(y):
-            val.append(M[i,j])
-    return val
