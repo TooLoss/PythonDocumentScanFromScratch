@@ -81,3 +81,76 @@ def Pi(P, t):
     for n in range(t):
         S += P(n)
     return S
+
+def NormeLocale(M, C:(int, int), n=1):
+    '''
+    M : Image
+    C : Taille de la plage
+    n : norme 1, 2 ...
+    return l'intégrale dans la plage [0,x], [0,y]
+    '''
+    x, y = C
+    mx, my = M.shape
+    I = 0
+    for i in range(x):
+        for j in range(y):
+            if x<mx and y<my:
+                I += M[i,j]**n
+    return I
+
+def MoyenneRectange(M, C, T):
+    '''
+    M : Image
+    n : Moyenne 1, 2, ...
+    C : Position du pixel
+    T : Taille du rectangle 
+    '''
+    x,y = C
+    dx,dy = T
+    maxx, maxy = M.shape
+    if x-dx<0 or y-dy<0 or x+dx>=maxx-1 or y+dy>=maxy-1:
+        dx = min(maxx-x-1, x)
+        dy = min(maxy-y-1, y)
+    N = (2*dx+1)*(2*dy+1)
+    m = (NormeLocale(M,(x+dx,y+dy),1) + NormeLocale(M,(x-dx,y-dy),1)
+         - NormeLocale(M,(x-dx,y-dy),1) - NormeLocale(M,(x+dx,y-dy),1))*(1/N)
+    return m
+
+def VarianceRectangle(M, C:(int,int), T:(int,int)):
+    '''
+    M : Image
+    (x,y) : Position du pixel
+    (dx,dy) : Taille du rectangle 
+    '''
+    x,y = C
+    dx,dy = T
+    N = (2*dx+1)*(2*dy+1)
+    S = (NormeLocale(M,(x+dx,y+dy),2) + NormeLocale(M,(x-dx,y-dy),2)
+         - NormeLocale(M,(x+dx,y-dy),2) - NormeLocale(M,(x+dx,y-dy),2))*1/(N-1) - (1/N)*(MoyenneRectange(M,(x,y),(dx,dy))*N)**2
+    return S
+
+def NiblackParam(I, k, S):
+    x,y = I.shape
+    P = []
+    for i in range(x):
+        for j in range(y):
+            m = MoyenneRectange(I, (i,j), (S,S))
+            v = VarianceRectangle(I, (i,j), (S,S))
+            P.append((m, v))
+    return P
+
+def Erosion(I, P:(int,int), T:(int,int)):
+    pass
+
+def ErosionElementaire(I, P:(int,int)):
+    mx, my = I.shape
+    x, y = T
+    a, b = P
+    cx = (x-1)//2
+    cy = (y-1)//2
+    S = 0
+    for i in range(x):
+        for j in range(y):
+            if (0 <= (a - cx) + i < mx) and (0 <= (b - cy) + j < my):
+                if I[a-cx+i, b-cy+j] > 10:
+                    return False

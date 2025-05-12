@@ -136,7 +136,7 @@ def Afficher(M):
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    plt.imshow(M, cmap='gray')
+    plt.imshow(M, cmap='gray', interpolation='none')
 
 def SaveAsPng(M, filename : str):
     """
@@ -224,6 +224,8 @@ def Seuil(M, s):
         for j in range(y):
             if M[i,j] < s:
                 M[i,j] = 0
+            else:
+                M[i,j] = 255
     return M
 
 def Padding(I, p : (int, int)):
