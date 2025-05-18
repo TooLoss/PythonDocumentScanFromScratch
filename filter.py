@@ -1,6 +1,6 @@
 import numpy as np
 from numpy import ndarray
-
+from numba import jit
 import main as m
 
 def WhiteScale(I, p):
@@ -41,9 +41,12 @@ def DicoProba(n, D=None):
     if D is None:
         D = GlobalDico
     x, y = np.shape(CacheImage)
-    return D[n]/(x*y)
+    if n in D:
+        return D[n]/(x*y)
+    else:
+        return 0
 
-def FADIT(I, p: (int, int) = 0):
+def FADIT(I, p: (int, int) = (0,0)):
     """
     Donne un seuil pour l'image I noir et blanc
     @param I: Image
@@ -82,6 +85,7 @@ def Pi(P, t):
         S += P(n)
     return S
 
+@jit(nopython=True)
 def NormeLocale(M, C:(int, int), n=1):
     '''
     M : Image
@@ -98,6 +102,7 @@ def NormeLocale(M, C:(int, int), n=1):
                 I += M[i,j]**n
     return I
 
+@jit(nopython=True)
 def MoyenneRectange(M, C, T):
     '''
     M : Image
@@ -116,6 +121,7 @@ def MoyenneRectange(M, C, T):
          - NormeLocale(M,(x-dx,y-dy),1) - NormeLocale(M,(x+dx,y-dy),1))*(1/N)
     return m
 
+@jit(nopython=True)
 def VarianceRectangle(M, C:(int,int), T:(int,int)):
     '''
     M : Image
@@ -129,6 +135,7 @@ def VarianceRectangle(M, C:(int,int), T:(int,int)):
          - NormeLocale(M,(x+dx,y-dy),2) - NormeLocale(M,(x+dx,y-dy),2))*1/(N-1) - (1/N)*(MoyenneRectange(M,(x,y),(dx,dy))*N)**2
     return S
 
+@jit(nopython=True)
 def NiblackParam(I, k, S):
     x,y = I.shape
     P = []
@@ -139,18 +146,35 @@ def NiblackParam(I, k, S):
             P.append((m, v))
     return P
 
-def Erosion(I, P:(int,int), T:(int,int)):
-    pass
-
-def ErosionElementaire(I, P:(int,int)):
-    mx, my = I.shape
-    x, y = T
-    a, b = P
-    cx = (x-1)//2
-    cy = (y-1)//2
-    S = 0
+def Dilatation(I, r = 1):
+    """
+    Dilate l'image
+    :param I: Image
+    :param r: Rayon dilatation.
+    :return: Image dilaté
+    """
+    x, y = I.shape
+    R = np.zeros((x,y))
     for i in range(x):
         for j in range(y):
-            if (0 <= (a - cx) + i < mx) and (0 <= (b - cy) + j < my):
-                if I[a-cx+i, b-cy+j] > 10:
-                    return False
+            L = m.Surrouding(I, (i,j), r)
+            if 0 not in L:
+                R[i,j] = 255
+    return R
+
+def MedianBlur(I, r):
+    """
+    Prend les pixels voisins pour chaque pixel le remplace par la medianne.
+    :param I: Image
+    :param r: Rayon
+    :return: Image mediane
+    """
+    x, y = I.shape
+    R = np.zeros((x,y))
+    for i in range(x):
+        for j in range(y):
+            L = m.Surrouding(I, (i,j), r)
+            median = np.mean(L)
+            if I[i,j] > 0:
+                R[i,j] = median*.5
+    return R

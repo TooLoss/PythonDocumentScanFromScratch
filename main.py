@@ -1,11 +1,11 @@
-import numpy as np
-
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import math as math
+from numba import jit # Permet de faire du multithreading et d'accélerer le temps d'execution
 
 
+@jit(nopython=True)
 def ProduitMatricielElementaire(A, B, i, j):
     """
     Produit Matriciel Elementaire
@@ -18,6 +18,7 @@ def ProduitMatricielElementaire(A, B, i, j):
     return S
 
 
+@jit(nopython=True)
 def ProduitMatriciel(A, B):
     """
     Fait le produit matriciel sur toute la matrice
@@ -31,6 +32,8 @@ def ProduitMatriciel(A, B):
             R[i, j] = ProduitMatricielElementaire(A, B, i, j)
     return R
 
+
+@jit(nopython=True)
 def Produit(A, B):
     """
     Produit coordonnée à coordonnée de la matrice
@@ -43,6 +46,8 @@ def Produit(A, B):
             R[i,j] = A[i,j] * B[i,j]
     return R
 
+
+@jit(nopython=True)
 def ConvolutionElementaire(A, a, b, C):
     """
     Fait le produit de la matrice. Version centré
@@ -59,6 +64,7 @@ def ConvolutionElementaire(A, a, b, C):
     return S
 
 
+@jit(nopython=True)
 def Convolution(A, C):
     """
     Convolution A*C
@@ -173,8 +179,10 @@ def NormeAngle(MX, MY):
 
 def NonMaximum(A, N):
     """
-    A matrice d'angle
-    N norme
+    Recherche maximums le long d'une ligne.
+    :param A: Matrice qui contient l'angle (retourné de la fonction Canny).
+    :param N: Matruce qui contient la norme du contour (retourné de la fonction Canny).
+    :return: N mais débruité.
     """
     x, y = A.shape
     R = N.copy()
@@ -235,3 +243,29 @@ def Padding(I, p : (int, int)):
         for j in range(p[1], y-p[1]):
             R[i-p[0],j-p[1]] = I[i,j]
     return R
+
+@jit(nopython=True)
+def Surrouding(I, pos : (int,int), r):
+    L = []
+    x, y = pos
+    maxx, maxy = I.shape
+    for i in range(x-r, x+r+1):
+        for j in range(y-r, y+r+1):
+            if 0 <= i < maxx and 0 <= j < maxy:
+                L.append(I[i,j])
+    return L
+
+def Cut(M, A : (int, int), B : (int, int)):
+    """
+    Coupe l'image dans le rectangle A B
+    :return: Image coupé
+    """
+    x = B[0] - A[0]
+    y = B[1] - A[1]
+    magin_x = A[0]
+    magin_y = A[1]
+    C = np.zeros((x,y))
+    for i in range(x):
+        for j in range(y):
+            C[i,j] = M[i+magin_x,j+magin_y]
+    return C
