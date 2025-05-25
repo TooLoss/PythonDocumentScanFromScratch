@@ -2,10 +2,11 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import math as math
-from numba import jit # Permet de faire du multithreading et d'accélerer le temps d'execution
+from numba import jit, njit, prange # Permet de faire du multithreading et d'accélerer le temps d'execution
+from numba.typed import Dict
 
 
-@jit(nopython=True)
+@njit
 def ProduitMatricielElementaire(A, B, i, j):
     """
     Produit Matriciel Elementaire
@@ -18,7 +19,7 @@ def ProduitMatricielElementaire(A, B, i, j):
     return S
 
 
-@jit(nopython=True)
+@njit
 def ProduitMatriciel(A, B):
     """
     Fait le produit matriciel sur toute la matrice
@@ -33,7 +34,7 @@ def ProduitMatriciel(A, B):
     return R
 
 
-@jit(nopython=True)
+@njit
 def Produit(A, B):
     """
     Produit coordonnée à coordonnée de la matrice
@@ -47,7 +48,7 @@ def Produit(A, B):
     return R
 
 
-@jit(nopython=True)
+@njit
 def ConvolutionElementaire(A, a, b, C):
     """
     Fait le produit de la matrice. Version centré
@@ -64,7 +65,7 @@ def ConvolutionElementaire(A, a, b, C):
     return S
 
 
-@jit(nopython=True)
+@njit
 def Convolution(A, C):
     """
     Convolution A*C
@@ -147,8 +148,8 @@ def Afficher(M):
 def SaveAsPng(M, filename : str):
     """
     Sauvegarde l'image au format PNG
-    @param M: Image
-    @param filename: nome du fichier
+    :param M: Image
+    :param filename: chemin absolue du fichier. Pour avoir le relatif, commencer par ./
     """
     if not filename.endswith('.png'):
         filename += '.png'
@@ -238,13 +239,13 @@ def Seuil(M, s):
 
 def Padding(I, p : (int, int)):
     x, y = I.shape
-    R = np.zeros((x-2*p[0], y-2*p[1]))
+    R = np.zeros((x-2*p[0], y-2*p[1]), dtype=int)
     for i in range(p[0], x-p[0]):
         for j in range(p[1], y-p[1]):
             R[i-p[0],j-p[1]] = I[i,j]
     return R
 
-@jit(nopython=True)
+@njit
 def Surrouding(I, pos : (int,int), r):
     L = []
     x, y = pos
@@ -269,3 +270,70 @@ def Cut(M, A : (int, int), B : (int, int)):
         for j in range(y):
             C[i,j] = M[i+magin_x,j+magin_y]
     return C
+
+
+def ConnectedComponentLabeling(I, b = 0):
+    """
+    Algorithme de détection de blob.
+    Retourn la positions des blobs de l'image.
+    :param b: Background color
+    :param I: Matrice image
+    :return: La matrice avec les différentes classes d'équivalence
+    """
+    x, y = np.shape(I)
+    Label = np.zeros((x, y), dtype=int)
+    tag = 1
+    Redef = {}
+    for i in range(1, x-1):
+        for j in range(1, y-1):
+
+            LVoisin = [Label[i-1,j], Label[i,j-1]]
+            LVoisin = [i for i in LVoisin if i != 0]
+
+            if I[i,j] != b:
+                if len(LVoisin) == 0: # Si on tombe sur une nouvelle classe
+                    Label[i,j] = tag
+                    tag += 1
+                else: # Si il y a 1 ou plus de classes attachées.
+                    min_tag = min(LVoisin)
+                    Label[i, j] = min_tag
+                    for n in LVoisin:
+                        if n != min_tag:
+                            Redef[n] = min_tag
+                            # Si plus de 2 ou plus classes sont touchée, elles pointent toutes sur le min tag
+    # Joindre les classes qui se touchent
+    for i in range(x):
+        for j in range(y):
+            if Label[i, j] != 0:
+                label = Label[i, j]
+                while label in Redef: # On parcours le graphe pour arriver au minimum
+                    label = Redef[label]
+                Label[i, j] = label
+
+    return Label
+
+
+@njit
+def AutoCrop(I, val=0):
+    """
+    Redimensionne l'image pour ne contenir que val
+    :param I: Image
+    :param val: valeur a isoler
+    :return:
+    """
+    x, y = I.shape
+    xmin, ymin, = x-1, y-1
+    xmax, ymax = 0, 0
+    for i in range(x):
+        for j in range(y):
+            if I[i, j] == val:
+                if i < xmin:
+                    xmin = i
+                if j < ymin:
+                    ymin = j
+                if i > xmax:
+                    xmax = i
+                if j > ymax:
+                    ymax = j
+    C = I[xmin:xmax, ymin - 1:ymax + 1]
+    return C, xmin, ymin, xmax, ymax

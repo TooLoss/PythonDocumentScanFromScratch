@@ -111,10 +111,12 @@ def TransformationProjective(I, PE, PS, Interpolation : callable = Interpolation
 def FillBasedOnNeighbour(M):
     x, y = M.shape
     Img = M.copy()
-    for i in range(x):
-        for j in range(y):
-            if M[i][j] == -1:
-                Img[i, j] = CloneNeighbour(M, (i, j), 1)
+    while -1 in M:
+        for i in range(x):
+            for j in range(y):
+                if M[i][j] == -1:
+                    Img[i, j] = CloneNeighbour(M, (i, j), 1)
+        M = Img.copy() # Si on doit refaire l'alorithme car trop de points a remplir. Repartir de l'image déjà généré
     return Img
 
 
@@ -131,7 +133,7 @@ def CloneNeighbour(M, P, r=1):
 
 def MajorityPoint(Points):
     if len(Points) == 0:
-        return 0
+        return -1
     m = np.mean(Points)
     d = {abs(Points[i]-m): i for i in range(len(Points))}
     vmin = np.min(np.abs(Points - m))
@@ -146,45 +148,11 @@ def CropImage(H, PS = [[2408,0],[2408,3508],[0,0],[0,3508]]):
     Doc = H[round(PS[2][1]):round(PS[1][1]), round(PS[2][0]):round(PS[1][0])]
     return Doc
 
-def ConnectedComponentLabeling(I):
-    """
-    Algorithme de détection de blob.
-    Retourn la positions des blobs de l'image.
-    :param I: Matrice image
-    :return: La matrice avec les différentes classes d'équivalence
-    """
-    x, y = np.shape(I)
-    Label = np.zeros((x, y), dtype=int)
-    tag = 1
-    Redef = {}
-    for i in range(1, x-1):
-        for j in range(1, y-1):
-            L = [Label[i+1,j], Label[i,j+1], Label[i-1,j], Label[i,j-1]] # Crée la list de type int
-            L = [i for i in L if i != 0]
-            mtag = 0
-            if len(L) > 0:
-                mtag = min(L)
-            if I[i,j] > 0 and Label[i,j] == 0:
-                if mtag == 0:
-                    Label[i,j] = tag
-                    tag += 1
-                elif (mtag == Label[i - 1,j] or Label[i - 1,j] == 0) and (mtag == Label[i, j - 1] or Label[i, j - 1] == 0):
-                    Label[i,j] = mtag
-                else: # Conflits entre 2 classes ou plus, donc on les ajoute
-                    for e in L:
-                        if e != mtag:
-                            Redef[e] = mtag
-                    Label[i,j] = mtag
-    for i in range(x):
-        for j in range(y):
-            if Label[i,j] in Redef.keys():
-                Label[i,j] = Redef[Label[i,j]]
-    return Label
-
 
 def SortConvention(L):
     """
     Ordonne la liste selon la convention HG, HD, BD, BG
+    En fonction de la position du point par rapport a la médiane.
     """
     assert len(L)==4, "Error : SortConvention. Il faut 4 points. " + str(len(L)) + " sont données."
     R = []
@@ -222,7 +190,7 @@ def MergeByDistance(P, d):
 
 def BarycentreClasses(Label):
     """
-    Utilise la fonction ConnectedComponentLabeling
+    Utilise la fonction m.ConnectedComponentLabeling
     Retourne les positions des baricentres des différentes classes
     :param Label: Matrice label de la fonction
     :return:
@@ -278,7 +246,7 @@ def FindCornersPosition(I):
     C = m.Produit(abs(VX), abs(VY))
     P = m.Seuil(C, np.max(C)*.5) # Matrice qui contient les 4 points
     m.Afficher(P)
-    return BarycentreClasses(ConnectedComponentLabeling(P))
+    return BarycentreClasses(m.ConnectedComponentLabeling(P))
 
 
 @jit(nopython=True)
@@ -339,4 +307,4 @@ def MakeHomographie(M):
 
     HImage, e_suraffectations = TransformationProjective(R, P, PS)
     H = m.Cut(HImage, (0,0), (int(PS[1,1]),int(PS[1,0])))
-    return H.transpose()
+    return H
