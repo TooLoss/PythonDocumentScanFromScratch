@@ -23,24 +23,24 @@ def hadamard_product(A, B):
 
 
 @njit
-def convolve_at(A, i, j, C):
+def convolve_at(A, a, b, C):
     """
-    Make convolution operation on A at the coordinate (i,j) using kernel C.
+    Make convolution operation on A at the coordinate (a,b) using kernel C.
     :param A: Matrix
-    :param i: Coordinate
-    :param j: Coordinate
+    :param a: Coordinate
+    :param b: Coordinate
     :param C: Convolution Matrix
     :return: Result of convolution operation
     """
     mx, my = A.shape
     x, y = C.shape
-    cx = (x-1)//2
-    cy = (y-1)//2
+    cx = (x - 1) // 2
+    cy = (y - 1) // 2
     S = 0
     for i in range(x):
         for j in range(y):
-            if (0 <= (i - cx) + i < mx) and (0 <= (j - cy) + j < my):
-                S += A[i - cx + i, j - cy + j] * C[i, j]
+            if (0 <= (a - cx) + i < mx) and (0 <= (b - cy) + j < my):
+                S += A[a - cx + i, b - cy + j] * C[i, j]
     return S
 
 
@@ -76,7 +76,7 @@ def gaussian_filter(n, s):
     return G/np.sum(G) # Normalise pour conserver la même luminosité 
 
 
-def apply_gaussian_blur(A, n, s):
+def make_gaussian_blur(A, n, s):
     """
     Apply gaussian blur on A.
     :param A: Image
@@ -163,7 +163,7 @@ def save_img_as_png(M, filename : str):
     plt.imsave(filename, rgba_image)
 
 
-def treshold(M, s):
+def apply_treshold(M, s):
     x, y = M.shape
     for i in range(x):
         for j in range(y):

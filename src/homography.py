@@ -235,8 +235,8 @@ def find_corners_positions(I):
     :return: Liste de tuple des coordonnées des coins
     """
     VX, VY = m.matrix_2Dgradient(I)
-    VX = m.apply_gaussian_blur(abs(VX), 10, 50)
-    VY = m.apply_gaussian_blur(abs(VY), 10, 50)
+    VX = m.make_gaussian_blur(abs(VX), 10, 50)
+    VY = m.make_gaussian_blur(abs(VY), 10, 50)
     C = m.hadamard_product(abs(VX), abs(VY))
     return barycenter_label_matrix(m.connected_component_labeling(C, 0))
 
@@ -268,9 +268,9 @@ def make_projective_transform(M, treshold = 128, textIslandSize = 2000):
     inclinationFactor = .65     # areaEndShape = areaInitialShape * inclinationFactor
 
     # Automation process
-    R = np.copy(M)      # Get a copy of M to find edges.
-    R = m.apply_gaussian_blur(R, 10, 1)
-    m.treshold(R, treshold)
+    R = M.copy()
+    R = m.make_gaussian_blur(R, 10, 1)
+    m.apply_treshold(R, treshold)
     replace_islands_out_of_range(R, textIslandSize, R.shape[0]*R.shape[1], 255, 255) # Remove text
     m.print_img(R)
     C = m.compressed_copy(R, compressionFactor)     # Compress the image to speed up the edge dection.
