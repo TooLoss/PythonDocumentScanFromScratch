@@ -5,8 +5,6 @@
 |-------|--------|---------|
 | ![GitHub Actions](https://img.shields.io/badge/status-active-brightgreen) | ![Python](https://img.shields.io/badge/python-3.8%2B-blue) | ![License](https://img.shields.io/badge/license-MIT-yellow) |
 
----
-
 ## Overview
 This project is a **document scanner** built **from scratch** in Python.
 
@@ -19,8 +17,6 @@ It's a testament to learning by doing and the value of reinventing the wheel for
 
 **Goal:** Archieve an automatic scan of a document. Document will be straightened and binarized in dark and white.
 
----
-
 ## Features
 
 | Feature                    | Description                                           |
@@ -32,7 +28,6 @@ It's a testament to learning by doing and the value of reinventing the wheel for
 
 Here is an example of each step of the process done automatically.
 ![200|Before After](showcase-images/before-after.jpg)
----
 
 ## Installation
 ### Prerequisites
@@ -50,13 +45,11 @@ cd PythonDocumentScanFromScratch
 pip install -r requirements.txt
 ```
 
----
 
 ## Usage
 
 Every steps are details in the [main](main.ipynb) notebook.
 
----
 
 ## Methodology
 ### 1. Corner Detection
@@ -70,7 +63,6 @@ Every steps are details in the [main](main.ipynb) notebook.
 ### 3. Binarization
 - Local tresholding implementation : Sauvola and Niblack.
 
----
 
 ## Jupyter Notebooks
 This project includes Jupyter Notebooks for exploration and results visualization:
@@ -81,7 +73,6 @@ This project includes Jupyter Notebooks for exploration and results visualizatio
 | `/notebook/OptimisationSortie.ipynb` | How to optimize the size of the projected document. |
 |                                      | Other notebooks have to be cleaned up.              |
 
----
 
 ## Results and limits
 
@@ -94,17 +85,17 @@ With a high contrast between the page and the background.
 | Execution Time : Projective transofrm        | 12s per image |
 | Execution Time : Tresholding                 | 1m per image  |
 
----
+
 
 ## Contributing
 Contributions are welcome! Open an **Issue** or a **Pull Request** to suggest improvements.
 
----
+
 
 ## License
 This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
----
+
 
 ## Academic References
 
@@ -116,7 +107,6 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for d
 [L. JAGANNATHAN ; C. V. JAWAHAR : Perspective Correction Methods for Camera-
 Based Document Analysis](https://cdn.iiit.ac.in/cdn/cvit.iiit.ac.in/images/ConferencePapers/2005/jagannathan05Perspective.pdf) / Homography Matrix
 
----
 
 ## Contact
 Bilèle EL HADDADI
