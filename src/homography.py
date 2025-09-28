@@ -3,6 +3,8 @@ from src import main as m
 from numba import njit
 import matplotlib.pyplot as plt
 
+from src.filter import dilatation
+
 
 @njit
 def compute_homography_matrix(entryPoints, endPoints):
@@ -235,9 +237,16 @@ def find_corners_positions(I):
     :return: Liste de tuple des coordonnées des coins
     """
     VX, VY = m.matrix_2Dgradient(I)
-    VX = m.make_gaussian_blur(abs(VX), 10, 50)
-    VY = m.make_gaussian_blur(abs(VY), 10, 50)
+    for i in range(5):
+        # Blur the image to extend the intersection
+        VX = m.make_gaussian_blur(abs(VX), 5, 10)
+        VY = m.make_gaussian_blur(abs(VY), 5, 10)
+    m.apply_treshold(VX, np.max(VX)/1.5)
+    m.apply_treshold(VY, np.max(VX)/1.5)
+    VX = dilatation(VX, 2, 255, 255)
+    VY = dilatation(VY, 2, 255, 255)
     C = m.hadamard_product(abs(VX), abs(VY))
+    m.print_img(C)
     return barycenter_label_matrix(m.connected_component_labeling(C, 0))
 
 
@@ -254,10 +263,12 @@ def points_to_matrix(P):
     return R
 
 
-def make_projective_transform(M, treshold = 128, textIslandSize = 2000):
+def make_projective_transform(M, treshold = 128, textIslandSize = 2000,
+                              imageFormat = np.array([[0, 3508], [2408, 3508], [0, 0], [2408, 0]])):
     """
     Perform an automatic projective transform on a document.
     This function combines algorithms to build the transformation from scratch.
+    :param imageFormat: Image format, rectangle
     :param treshold: Initial threshold used to binarize the image and detect edges. Default is 256/2.
     :param textIslandSize: Dark islands with fewer than textIslandSize pixels will be removed.
     :param M: Image matrix.
@@ -269,21 +280,20 @@ def make_projective_transform(M, treshold = 128, textIslandSize = 2000):
 
     # Automation process
     R = M.copy()
+    R = m.compressed_copy(R, compressionFactor)     # Compress the image to speed up the edge dection.
     R = m.make_gaussian_blur(R, 10, 1)
     m.apply_treshold(R, treshold)
-    replace_islands_out_of_range(R, textIslandSize, R.shape[0]*R.shape[1], 255, 255) # Remove text
-    m.print_img(R)
-    C = m.compressed_copy(R, compressionFactor)     # Compress the image to speed up the edge dection.
-    cornerList = find_corners_positions(C)
+    replace_islands_out_of_range(R, textIslandSize//compressionFactor, R.shape[0]*R.shape[1], 255, 255) # Remove text
+    cornerList = find_corners_positions(R)
 
-    if len(cornerList) > 4:
-        merge_points_by_distance(cornerList, M.shape[0] / 10)
+    #if len(cornerList) > 4:
+    #    merge_points_by_distance(cornerList, M.shape[0] / 10)
 
-    cornerList = [(x*compressionFactor, y*compressionFactor) for x, y in cornerList] # Adjust the compression factor
     assert len(cornerList)==4, "transform_projective(). Must have 4 points, got " + str(len(cornerList)) + " instead."
+    cornerList = [(x*compressionFactor, y*compressionFactor) for x, y in cornerList] # Adjust the compression factor
 
     cornerList = sort_convention(cornerList)     # Order points : Top-Left,Top-Right,Bottom-Right,Bottom-Left
-    endPoints = np.array([[0, 3508], [2408, 3508], [0, 0], [2408, 0]]) # A4 Default Document format
+    endPoints = imageFormat # A4 Default Document format
 
     # Determine the optimal end position to minimize the number of unaffected points
     # To achieve this, we maintain the relationship: area_EndPointFigure = area_CornerPointsFigure * multiplier
@@ -300,7 +310,7 @@ def make_projective_transform(M, treshold = 128, textIslandSize = 2000):
     plt.scatter(cornerPointsX, cornerPointsY, color = 'r', label='Starting points (corners)') # Corner Points
     plt.scatter(endPointsX, endPointsY, color='b', label='End points') # End Points
     plt.legend()
-    plt.imshow(R, cmap="gray")
+    plt.imshow(M, cmap="gray")
     plt.show()
 
     # Given the start and end points, proceed with the projection calculation.

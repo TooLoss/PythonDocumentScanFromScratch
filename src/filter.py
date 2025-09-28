@@ -4,13 +4,13 @@ from src import main as m
 
 
 @njit
-def dilate_copy(I, radius=1, searchedColor=0, filledColor=255):
+def dilatation(I, radius=1, searchColor=0, filledColor=255):
     """
     Dilates an image by expanding where the specified color searchedColor is present within a neighborhood of radius.
-    The dilated area is filled with filledColor if the color searchedColor is not found in the neighborhood of any pixel.
+    The dilated area is then filled with filledColor.
     :param I: Image
-    :param searchedColor: Target color value to check for in the neighborhood.
-    :param radius: Radius of the neighborhood for dilation.
+    :param searchColor: Target color value to check for in the neighborhood.
+    :param radius: Radius of the neighborhood.
     :param filledColor: Color of the dilated area.
     :return: Dilated output image
     """
@@ -19,7 +19,7 @@ def dilate_copy(I, radius=1, searchedColor=0, filledColor=255):
     for i in range(x):
         for j in range(y):
             L = m.get_surrounding(I, (i, j), radius)
-            if searchedColor not in L:
+            if searchColor in L:
                 R[i,j] = filledColor
     return R
 
