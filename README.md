@@ -6,6 +6,9 @@
 | ![GitHub Actions](https://img.shields.io/badge/status-active-brightgreen) | ![Python](https://img.shields.io/badge/python-3.8%2B-blue) | ![License](https://img.shields.io/badge/license-MIT-yellow) |
 
 ## Overview
+
+![200|Before After](showcase-images/before-after.jpg)
+
 This project is a **document scanner** built **from scratch** in Python.
 
 It was developed as part of my TIPE (Personal Initiative Project) in engineering school.
@@ -25,9 +28,6 @@ It's a testament to learning by doing and the value of reinventing the wheel for
 | **Perspective Correction** | Homographic transformation to straighten the document |
 | **Binarization**           | Convert to black and white using local thresholding   |
 | **Export**                 | Save as PNG (matplotlib)                              |
-
-Here is an example of each step of the process done automatically.
-![200|Before After](showcase-images/before-after.jpg)
 
 ## Installation
 ### Prerequisites
